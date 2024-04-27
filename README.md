@@ -1,2 +1,2 @@
 # fullstack-node
-exercises 3.1 - 3.6
+exercises 3.1 - 3.8
