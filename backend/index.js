@@ -1,10 +1,15 @@
 const express = require("express");
-const app = express();
+const cors = require("cors");
 const morgan = require("morgan");
+const app = express();
 
 app.use(express.json());
 
 app.use(morgan("tiny"));
+
+app.use(cors());
+
+app.use(express.static("dist"));
 
 app.use(
   morgan(function (tokens, req, res) {
@@ -81,9 +86,17 @@ app.get("/api/persons/:id", (req, res) => {
 
 app.delete("/api/persons/:id", (req, res) => {
   const id = Number(req.params.id);
+  const person = persons.find((person) => person.id === id);
+
+  if (!person) {
+    return res
+      .status(404)
+      .json({ error: `Person with id '${id}' does not exist` });
+  }
 
   persons = persons.filter((person) => person.id !== id);
-  res.status(204).end();
+
+  res.status(204).json({ person });
 });
 
 app.post("/api/persons", (req, res) => {
@@ -105,7 +118,7 @@ app.post("/api/persons", (req, res) => {
   }
 });
 
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Listening to port ${PORT}`);
 });
