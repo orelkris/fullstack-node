@@ -39,7 +39,7 @@ const App = () => {
     try {
       nameValidation(newName);
       actions
-        .createPerson({ name: newName, number: newNumber })
+        .createPerson({ name: newName, phoneNumber: newNumber })
         .then((newPerson) => {
           setPersons([...persons, newPerson]);
           handleNotification(`Added ${newName} to phonebook.`);
@@ -53,7 +53,7 @@ const App = () => {
         actions
           .updatePerson(personId, {
             name: newName,
-            number: newNumber,
+            phoneNumber: newNumber,
           })
           .then((updatedPerson) => {
             setPersons(
@@ -92,8 +92,8 @@ const App = () => {
   };
 
   const handleNumberChange = (event) => {
-    const number = event.target.value;
-    setNewNumber(number);
+    const phoneNumber = event.target.value;
+    setNewNumber(phoneNumber);
   };
 
   const handleFilterInput = (event) => {
