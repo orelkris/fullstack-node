@@ -30,52 +30,29 @@ app.use(
   })
 );
 
-// let persons = [
-//   {
-//     id: 1,
-//     name: "Arto Hellas",
-//     number: "040-123456",
-//   },
-//   {
-//     id: 2,
-//     name: "Ada Lovelace",
-//     number: "39-44-5323523",
-//   },
-//   {
-//     id: 3,
-//     name: "Dan Abramov",
-//     number: "12-43-234345",
-//   },
-//   {
-//     id: 4,
-//     name: "Mary Poppendieck",
-//     number: "39-23-6423122",
-//   },
-// ];
-
-// const generateId = (min, max) => {
-//   return Math.floor(Math.random() * (max - min) + min);
-// };
-
-// const checkNameExists = (name, persons) => {
-//   return persons.some((person) => person.name === name);
-// };
-
-app.get("/info", (req, res) => {
-  const timestamp = new Date();
-  const infoAmount = persons.length;
-
-  res.send(`<p>Phonebook has info for ${infoAmount} people</p>
+app.get("/info", (req, res, next) => {
+  Person.find({})
+    .then((person) => {
+      const timestamp = new Date();
+      return res.send(
+        `<p>Phonebook has info for ${person.length} people</p>
   <p>${timestamp}</p>
-  `);
+  `
+      );
+    })
+    .catch((error) => next(error));
 });
 
-app.get("/api/persons", (req, res) => {
-  Person.find({}).then((person) => res.json(person));
+app.get("/api/persons", (req, res, next) => {
+  Person.find({})
+    .then((person) => res.json(person))
+    .catch((error) => next(error));
 });
 
-app.get("/api/persons/:id", (req, res) => {
-  Person.findById(req.params.id).then((person) => res.json(person));
+app.get("/api/persons/:id", (req, res, next) => {
+  Person.findById(req.params.id)
+    .then((person) => res.json(person))
+    .catch((error) => next(error));
 });
 
 app.post("/api/persons", (req, res) => {
@@ -95,20 +72,55 @@ app.post("/api/persons", (req, res) => {
   }
 });
 
-app.delete("/api/persons/:id", (req, res) => {
-  const id = Number(req.params.id);
-  const person = persons.find((person) => person.id === id);
+app.put("/api/persons/:id", (req, res) => {
+  console.log(req.params.id);
+  const id = req.params.id;
+  const { name, phoneNumber } = req.body;
 
-  if (!person) {
-    return res
-      .status(404)
-      .json({ error: `Person with id '${id}' does not exist` });
+  const person = {
+    name,
+    phoneNumber,
+  };
+
+  Person.findByIdAndUpdate(id, person, { new: true }).then((updatedPerson) => {
+    console.log(updatedPerson);
+    res.json(updatedPerson);
+  });
+});
+
+app.delete("/api/persons/:id", (req, res) => {
+  console.log("here");
+  Person.findByIdAndDelete(req.params.id)
+    .then((deletedPerson) => {
+      if (deletedPerson) {
+        res.status(204).json(deletedPerson);
+      } else {
+        res.status(400).json(`Person does not exist in phonebook`);
+      }
+      console.log(deletedPerson, "deleted person");
+    })
+    .catch((error) => next(error));
+});
+
+const unknownEndpoint = (request, response) => {
+  response.status(404).send({ error: "unknown endpoint" });
+};
+
+// handler of requests with unknown endpoint
+app.use(unknownEndpoint);
+
+const errorHandler = (error, req, res, next) => {
+  console.error(error.message);
+  if (error.name === "CastError") {
+    return res.status(400).send({ error: "malformatted id" });
   }
 
-  persons = persons.filter((person) => person.id !== id);
+  res.status(400).send({ error: "An error has occured." });
 
-  res.status(204).json({ person });
-});
+  next(error);
+};
+
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
