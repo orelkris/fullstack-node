@@ -43,6 +43,12 @@ const App = () => {
         .then((newPerson) => {
           setPersons([...persons, newPerson]);
           handleNotification(`Added ${newName} to phonebook.`);
+        })
+        .catch((error) => {
+          handleNotification(
+            `Error: ${error.response.data.error}`,
+            NotificationType.FAIL
+          );
         });
       reset();
     } catch (e) {
@@ -63,10 +69,9 @@ const App = () => {
             );
             handleNotification(`Updated ${newName}'s number.`);
           })
-          .catch(() => {
-            setPersons(persons.filter((person) => person.name !== newName));
+          .catch((error) => {
             handleNotification(
-              `${newName} has already been removed from phonebook.`,
+              `${error?.response?.data?.error}`,
               NotificationType.FAIL
             );
           });
@@ -121,7 +126,7 @@ const App = () => {
   if (!persons) return null;
 
   const filterPersons = persons.filter((person) =>
-    person.name.toLowerCase().includes(filterInput.toLowerCase())
+    person?.name?.toLowerCase().includes(filterInput.toLowerCase())
   );
 
   return (

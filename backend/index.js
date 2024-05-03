@@ -55,7 +55,7 @@ app.get("/api/persons/:id", (req, res, next) => {
     .catch((error) => next(error));
 });
 
-app.post("/api/persons", (req, res) => {
+app.post("/api/persons", (req, res, next) => {
   const { name, phoneNumber } = req.body;
 
   if (!name) {
@@ -68,12 +68,16 @@ app.post("/api/persons", (req, res) => {
       phoneNumber,
     });
 
-    person.save().then((savedPerson) => res.json(savedPerson));
+    person
+      .save()
+      .then((savedPerson) => res.json(savedPerson))
+      .catch((error) => {
+        next(error);
+      });
   }
 });
 
-app.put("/api/persons/:id", (req, res) => {
-  console.log(req.params.id);
+app.put("/api/persons/:id", (req, res, next) => {
   const id = req.params.id;
   const { name, phoneNumber } = req.body;
 
@@ -82,14 +86,14 @@ app.put("/api/persons/:id", (req, res) => {
     phoneNumber,
   };
 
-  Person.findByIdAndUpdate(id, person, { new: true }).then((updatedPerson) => {
-    console.log(updatedPerson);
-    res.json(updatedPerson);
-  });
+  Person.findByIdAndUpdate(id, person, { new: true, runValidators: true })
+    .then((updatedPerson) => {
+      res.json(updatedPerson);
+    })
+    .catch((error) => next(error));
 });
 
 app.delete("/api/persons/:id", (req, res) => {
-  console.log("here");
   Person.findByIdAndDelete(req.params.id)
     .then((deletedPerson) => {
       if (deletedPerson) {
@@ -97,7 +101,6 @@ app.delete("/api/persons/:id", (req, res) => {
       } else {
         res.status(400).json(`Person does not exist in phonebook`);
       }
-      console.log(deletedPerson, "deleted person");
     })
     .catch((error) => next(error));
 });
@@ -112,7 +115,9 @@ app.use(unknownEndpoint);
 const errorHandler = (error, req, res, next) => {
   console.error(error.message);
   if (error.name === "CastError") {
-    return res.status(400).send({ error: "malformatted id" });
+    return res.status(400).json({ error: "malformatted id" });
+  } else if (error.name === "ValidationError") {
+    return res.status(400).json({ error: error.message });
   }
 
   res.status(400).send({ error: "An error has occured." });

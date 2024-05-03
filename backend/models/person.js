@@ -8,7 +8,23 @@ mongoose
   .then((result) => console.log("Connected to mongodb"))
   .catch((error) => console.log(error.message));
 
-const schema = new mongoose.Schema({ name: String, phoneNumber: String });
+const schema = new mongoose.Schema({
+  name: {
+    type: String,
+    minLength: 3,
+    required: true,
+  },
+  phoneNumber: {
+    type: String,
+    minLength: 8,
+    validate: {
+      validator: function (v) {
+        return /^\d{2,3}-\d+$/.test(v);
+      },
+      message: (props) => `${props.value} is not a valid number.`,
+    },
+  },
+});
 
 schema.set("toJSON", {
   transform: (document, returnedObject) => {
